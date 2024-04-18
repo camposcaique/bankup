@@ -1,6 +1,6 @@
 package bancoexemploapi.app.controller;
 
-import bancoexemploapi.app.repository.ClienteRepository;
+import bancoexemploapi.app.exceptions.CustomNotFoundException;
 import bancoexemploapi.app.service.ClienteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("api")
 @RequiredArgsConstructor
 public class ClienteController {
-  private final ClienteRepository clienteRepository;
   private final ClienteService clienteService;
 
   // POST = CREATE
@@ -29,24 +28,27 @@ public class ClienteController {
 
   // PUT = UPDATE
   @PutMapping("put")
-  public ResponseEntity<ClienteResponse> putCliente(@RequestParam Long id, String newName) {
-    final var clienteResponse = clienteService.updateCliente(id, newName);
-    if (clienteResponse.getCode() == 200) {
+  public ResponseEntity<?> putCliente(@RequestParam Long id, String newName) {
+    try {
+      final var clienteResponse = clienteService.updateCliente(id, newName);
       return new ResponseEntity<>(clienteResponse, HttpStatus.OK);
-    } else {
-      return new ResponseEntity<>(clienteResponse, HttpStatus.BAD_REQUEST);
+    } catch (CustomNotFoundException e) {
+      return new ResponseEntity<>(new ErrorResponse(
+          400, "The client ID is not found"),
+          HttpStatus.BAD_REQUEST);
     }
   }
 
-
   // DELETE = DELETE
   @DeleteMapping("delete")
-  public ResponseEntity<ClienteResponse> deleteCliente(@RequestParam Long id) {
+  public ResponseEntity<?> deleteCliente(@RequestParam Long id) {
+    try {
     final var clienteResponse = clienteService.deleteCliente(id);
-    if (clienteResponse.getCode() == 200) {
-      return new ResponseEntity<>(clienteResponse, HttpStatus.OK);
-    } else {
-      return new ResponseEntity<>(clienteResponse, HttpStatus.BAD_REQUEST);
+    return new ResponseEntity<>(clienteResponse, HttpStatus.OK);
+    } catch (CustomNotFoundException e) {
+      return new ResponseEntity<>(new ErrorResponse(
+              400, "Can't delete"),
+              HttpStatus.BAD_REQUEST);
     }
   }
 }

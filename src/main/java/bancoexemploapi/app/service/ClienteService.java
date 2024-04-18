@@ -3,6 +3,8 @@ package bancoexemploapi.app.service;
 import bancoexemploapi.app.controller.ClienteRequest;
 import bancoexemploapi.app.controller.ClienteResponse;
 import bancoexemploapi.app.entities.Cliente;
+import bancoexemploapi.app.exceptions.CustomNotFoundException;
+import bancoexemploapi.app.mapstruct.MapperCliente;
 import bancoexemploapi.app.repository.ClienteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,23 +15,17 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ClienteService {
   private final ClienteRepository clienteRepository;
+  private final MapperCliente mapperCliente;
 
   public ClienteResponse createCliente(ClienteRequest request) {
-    final var clienteResponse = new ClienteResponse();
-    clienteResponse.setCode(201);
-    clienteResponse.setMessage("Client created success");
-    final var cliente = new Cliente();
-    cliente.setName(request.getName());
+    final var cliente = mapperCliente.toCliente(request);
     clienteRepository.save(cliente);
-    return clienteResponse;
+    return mapperCliente.toResponse(cliente);
   }
 
   public ClienteResponse getCliente(String name) {
     final var cliente = clienteRepository.findByName(name);
-    final var clienteResponse = new ClienteResponse();
-    clienteResponse.setCode(200);
-    clienteResponse.setMessage(cliente.getId() + "-" + cliente.getName());
-    return clienteResponse;
+    return mapperCliente.toResponse(cliente);
   }
 
   public ClienteResponse updateCliente(Long id, String newName) {
@@ -39,15 +35,9 @@ public class ClienteService {
       cliente.setName(newName);
       clienteRepository.save(clienteOptional.get());
     } else {
-      final var clienteResponseError = new ClienteResponse();
-      clienteResponseError.setCode(400);
-      clienteResponseError.setMessage("Client is not found");
-      return clienteResponseError;
+      throw new CustomNotFoundException("Client is not found");
     }
-    final var clienteResponse = new ClienteResponse();
-    clienteResponse.setCode(200);
-    clienteResponse.setMessage("Client is updated to " + clienteOptional.get().getName());
-    return clienteResponse;
+    return mapperCliente.toResponse(clienteOptional.get());
   }
 
   public ClienteResponse deleteCliente(Long id) {
@@ -55,14 +45,8 @@ public class ClienteService {
     if (clienteOptional.isPresent()) {
       clienteRepository.delete(clienteOptional.get());
     } else {
-      final var clienteResponseError = new ClienteResponse();
-      clienteResponseError.setCode(400);
-      clienteResponseError.setMessage("Client is not found");
-      return clienteResponseError;
+      throw new CustomNotFoundException("Client is not found");
     }
-    final var clienteResponse = new ClienteResponse();
-    clienteResponse.setCode(200);
-    clienteResponse.setMessage("Client is deleted");
-    return clienteResponse;
+    return mapperCliente.toResponse(clienteOptional.get());
   }
 }

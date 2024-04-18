@@ -6,6 +6,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ClienteResponse {
-  private int code;
-  private String message;
+  private Long id;
+  private String name;
 }
